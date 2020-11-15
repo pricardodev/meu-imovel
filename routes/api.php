@@ -1,6 +1,9 @@
 <?php
 
 Route::prefix('v1')->namespace('Api')->group(function(){
+
+    Route::post('login', 'Auth\LoginJwtController@login')->name('login');
+
     Route::resource('real-states', 'RealStateController');
     Route::resource('users', 'UserController');
 
