@@ -40,6 +40,7 @@ class User extends Authenticatable implements JWTSubject
 
     public function getJWTCustomClaims()
     {
+        // adicionando clims no token
         return [];
     }
 }

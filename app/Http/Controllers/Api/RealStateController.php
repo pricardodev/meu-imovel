@@ -19,15 +19,17 @@ class RealStateController extends Controller
 
     public function index()
     {
-        $realState = $this->realState->paginate(10);
-
-        return response()->json($realState, 200);
+        // Pegando so os imoveis do usuário autenticado (Obs. realstate é método do Model que pode ser chamado como atributo)
+        // uso como método se quiser utilizar outros métodos concatenados como o paginate()
+        $realStates = auth('api')->user()->real_state();
+        return response()->json($realStates->paginate(10), 200);
     }
 
     public function show($id) 
     {
         try {
-            $realState = $this->realState->with('photos')->findOrFail($id);
+            // só os imoveis do usuário logado junto com as fotos
+            $realState = auth('api')->user()->real_state()->with('photos')->findOrFail($id);
             
             return response()->json([
                 'data' => $realState
@@ -43,12 +45,15 @@ class RealStateController extends Controller
 
     public function store(RealStateRequest $request) 
     {
+        // recupera o array de imagens
+        $images = $request->file('images');
+        $data = $request->all();
         try{
-            // recupera o array de imagens
-            $images = $request->file('images');
-
+            // recuperando o id do usuário logado
+            $data['user_id'] = auth('api')->user()->id;
+            
             //Método crate salva como array e retorna id do dado inserido
-            $realState = $this->realState->create($request->all());
+            $realState = $this->realState->create($data);
 
             if(isset($request->categories) && count($request->categories))
             {
@@ -88,7 +93,8 @@ class RealStateController extends Controller
         $images = $request->file('images');
 
         try {
-            $realState = $this->realState->findOrFail($id);
+            $realState = auth('api')->user()->real_state()->findOrFail($id);
+            $realState->update($request->all());
 
             if(isset($request->categories) && count($request->categories))
             {
@@ -109,8 +115,6 @@ class RealStateController extends Controller
                 $realState->photos()->createMany($imagesUploaded);
             }
 
-            $realState->update($request->all());
-
             return response()->json([
                 'data' => [
                     'msg' => 'Imóvel atualizado com sucesso!'
@@ -127,7 +131,7 @@ class RealStateController extends Controller
     public function destroy($id)
     {
         try {
-            $realState = $this->realState->findOrFail($id);
+            $realState = auth('api')->user()->real_state()->findOrFail($id);
             $realState->delete();
 
             return response()->json([
